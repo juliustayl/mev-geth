@@ -19,6 +19,7 @@
 package geth
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core/types"
@@ -28,6 +29,11 @@ import (
 // EthereumClient provides access to the Ethereum APIs.
 type EthereumClient struct {
 	client *ethclient.Client
+}
+
+type BulkStorage struct {
+	contract common.Address
+	storage  [][]byte
 }
 
 // NewEthereumClient connects a client to the given URL.
@@ -168,6 +174,31 @@ func (ec *EthereumClient) GetStorageAt(ctx *Context, account *Address, key *Hash
 		return ec.client.StorageAt(ctx.context, account.address, key.hash, nil)
 	}
 	return ec.client.StorageAt(ctx.context, account.address, key.hash, big.NewInt(number))
+}
+
+// GetStorageAt returns the value of key in the contract storage of the given account.
+// The block number can be <0, in which case the value is taken from the latest known block.
+func (ec *EthereumClient) GetBulkStorageAt(ctx *Context, accounts []*Address, key *Hash, number int64) (storage [][]byte, _ error) {
+	var bulkStorage [][]byte
+
+	for _, account := range accounts {
+
+		if number < 0 {
+			stor, err := ec.client.StorageAt(ctx.context, account.address, key.hash, nil)
+			if err != nil {
+				return bulkStorage, err
+			}
+			bulkStorage = append(bulkStorage, stor)
+		} else {
+			stor, err := ec.client.StorageAt(ctx.context, account.address, key.hash, big.NewInt(number))
+			if err != nil {
+				return bulkStorage, err
+			}
+			bulkStorage = append(bulkStorage, stor)
+		}
+	}
+
+	return bulkStorage, nil
 }
 
 // GetCodeAt returns the contract code of the given account.

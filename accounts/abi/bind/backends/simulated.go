@@ -72,6 +72,11 @@ type SimulatedBackend struct {
 	config *params.ChainConfig
 }
 
+type BulkStorage struct {
+	contract common.Address
+	storage  []common.Hash
+}
+
 // NewSimulatedBackendWithDatabase creates a new binding backend based on the given database
 // and uses a simulated blockchain for testing purposes.
 // A simulated backend always uses chainID 1337.
@@ -222,6 +227,24 @@ func (b *SimulatedBackend) StorageAt(ctx context.Context, contract common.Addres
 
 	val := stateDB.GetState(contract, key)
 	return val[:], nil
+}
+
+// BulkStorageAt returns the value of key in the storage of an account in the blockchain.
+func (b *SimulatedBackend) BulkStorageAt(ctx context.Context, contracts []common.Address, arrSize uint, key common.Hash, blockNumber *big.Int) (BulkStorage, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	var val BulkStorage
+	stateDB, err := b.stateByBlockNumber(ctx, blockNumber)
+	if err != nil {
+		return val, err
+	}
+
+	for _, contract := range contracts {
+		val.storage = append(val.storage, stateDB.GetState(contract, key))
+	}
+
+	return val, nil
 }
 
 // TransactionReceipt returns the receipt of a transaction.
