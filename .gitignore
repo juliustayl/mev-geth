@@ -4,6 +4,9 @@
 # or operating system, you probably want to add a global ignore instead:
 #   git config --global core.excludesfile ~/.gitignore_global
 
+#custom
+nohup.out
+
 /tmp
 */**/*un~
 */**/*.test
@@ -21,6 +24,7 @@ build/_vendor/pkg
 *~
 .project
 .settings
+
 
 # used by the Makefile
 /build/_workspace/
