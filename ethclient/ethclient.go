@@ -36,6 +36,11 @@ type Client struct {
 	c *rpc.Client
 }
 
+type BulkStorage struct {
+	contract common.Address
+	storage  []hexutil.Bytes
+}
+
 // Dial connects a client to the given URL.
 func Dial(rawurl string) (*Client, error) {
 	return DialContext(context.Background(), rawurl)
@@ -339,6 +344,15 @@ func (ec *Client) BalanceAt(ctx context.Context, account common.Address, blockNu
 func (ec *Client) StorageAt(ctx context.Context, account common.Address, key common.Hash, blockNumber *big.Int) ([]byte, error) {
 	var result hexutil.Bytes
 	err := ec.c.CallContext(ctx, &result, "eth_getStorageAt", account, key, toBlockNumArg(blockNumber))
+	return result, err
+}
+
+// BulkStorageAt returns the value of key in the contract storage of the given accounts.
+// The block number can be nil, in which case the value is taken from the latest known block.
+// TODO: pass array of keys in so we can check a different slot per address if we want to
+func (ec *Client) BulkStorageAt(ctx context.Context, accounts []common.Address /*arrSize uint, */, key common.Hash, blockNumber *big.Int) ([]hexutil.Bytes, error) {
+	var result []hexutil.Bytes
+	err := ec.c.CallContext(ctx, &result, "eth_getBulkStorageAt", accounts /*, arrSize*/, key, toBlockNumArg(blockNumber))
 	return result, err
 }
 
